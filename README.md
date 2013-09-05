@@ -11,7 +11,7 @@ It works with
 ### Features
 + Support I2C and SPI of PN532
 + Read/write Mifare Classic Card
-+ Works with [Don's Ndef Library](https://github.com/don/Ndef)
++ Works with [Don's NDEF Library](https://github.com/don/NDEF)
 
 ### Getting Started
 1. Download [zip file](https://github.com/Seeed-Studio/PN532/archive/master.zip) and 
