@@ -5,16 +5,18 @@
 
 #include "Arduino.h"
 
+#define SERIALPORT Serial
+
 #ifdef DEBUG
-#define DMSG(args...)       Serial.print(args)
-#define DMSG_STR(str)       Serial.println(str)
-#define DMSG_HEX(num)       Serial.print(' '); Serial.print(num, HEX)
-#define DMSG_INT(num)       Serial.print(' '); Serial.print(num)
+    #define DMSG(args...)       SERIALPORT.print(args)
+    #define DMSG_STR(str)       SERIALPORT.println(str)
+    #define DMSG_HEX(num)       SERIALPORT.print(' '); SERIALPORT.print(num, HEX)
+    #define DMSG_INT(num)       SERIALPORT.print(' '); SERIALPORT.print(num)
 #else
-#define DMSG(args...)
-#define DMSG_STR(str)
-#define DMSG_HEX(num)
-#define DMSG_INT(num)
+    #define DMSG(args...)
+    #define DMSG_STR(str)
+    #define DMSG_HEX(num)
+    #define DMSG_INT(num)
 #endif
 
 #endif

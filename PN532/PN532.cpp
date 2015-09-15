@@ -13,9 +13,8 @@
 
 #define HAL(func)   (_interface->func)
 
-PN532::PN532(PN532Interface &interface)
+PN532::PN532(PN532Interface &interface): _interface(&interface)
 {
-    _interface = &interface;
 }
 
 /**************************************************************************/
@@ -322,8 +321,8 @@ bool PN532::readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uid
     sens_res |= pn532_packetbuffer[3];
 
     DMSG("ATQA: 0x");  DMSG_HEX(sens_res);
-    DMSG("SAK: 0x");  DMSG_HEX(pn532_packetbuffer[4]);
-    DMSG("\n");
+    DMSG(" SAK: 0x");  DMSG_HEX(pn532_packetbuffer[4]);
+    DMSG_STR("");
 
     /* Card appears to be Mifare Classic */
     *uidLength = pn532_packetbuffer[5];
@@ -443,6 +442,7 @@ uint8_t PN532::mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data)
 {
     DMSG("Trying to read 16 bytes from block ");
     DMSG_INT(blockNumber);
+    DMSG_STR();
 
     /* Prepare the command */
     pn532_packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
@@ -456,7 +456,9 @@ uint8_t PN532::mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data)
     }
 
     /* Read the response packet */
-    HAL(readResponse)(pn532_packetbuffer, sizeof(pn532_packetbuffer));
+    if(HAL(readResponse)(pn532_packetbuffer, sizeof(pn532_packetbuffer))<0){
+        return 0;
+    }
 
     /* If byte 8 isn't 0x00 we probably have an error */
     if (pn532_packetbuffer[0] != 0x00) {

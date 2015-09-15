@@ -17,6 +17,7 @@ public:
     
 private:
     SPIClass* _spi;
+    SPISettings _spiSettings;
     uint8_t   _ss;
     uint8_t command;
     
@@ -25,12 +26,18 @@ private:
     int8_t readAckFrame();
     
     inline void write(uint8_t data) {
+        _spi->beginTransaction(_spiSettings);
         _spi->transfer(data);
+        _spi->endTransaction();
     };
 
     inline uint8_t read() {
-        return _spi->transfer(0);
-    }; 
+        uint8_t retVal;
+        _spi->beginTransaction(_spiSettings);
+        retVal=_spi->transfer(0);
+        _spi->endTransaction();
+        return retVal;
+    };
 };
 
 #endif
