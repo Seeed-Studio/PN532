@@ -22,9 +22,7 @@ It is for [NFC Shield](http://goo.gl/Cac2OH), [Xadow NFC](http://goo.gl/qBZMt0) 
 ### Getting Started
 + Easy way
 
-  1. Download [zip file](http://goo.gl/F6beRM) and extract the 4 folders(PN532, PN532_SPI, PN532_I2C and PN532_HSU) into Arduino's libraries.
-  2. Download [Don's NDEF library](http://goo.gl/ewxeAe)， extract it into Arduino's libraries and rename it to NDEF.
-  3. Follow the examples of the two libraries.
+  1. Download zip file and extract the 5 folders(PN532, PN532_SPI, PN532_I2C, PN532_HSU, NDEF) to Arduino's libraries.
 
 + Git way for Linux/Mac (recommended)
 
