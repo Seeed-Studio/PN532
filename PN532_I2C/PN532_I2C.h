@@ -7,7 +7,7 @@
 
 class PN532_I2C : public PN532Interface {
 public:
-    PN532_I2C(TwoWire &wire);
+    PN532_I2C(WireBase &wire);
     
     void begin();
     void wakeup();
@@ -15,7 +15,7 @@ public:
     int16_t readResponse(uint8_t buf[], uint8_t len, uint16_t timeout);
     
 private:
-    TwoWire* _wire;
+    WireBase* _wire;
     uint8_t command;
     
     int8_t readAckFrame();
