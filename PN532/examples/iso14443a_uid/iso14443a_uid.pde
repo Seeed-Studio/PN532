@@ -1,9 +1,5 @@
 /**************************************************************************/
 /*! 
-    @file     iso14443a_uid.pde
-    @author   Adafruit Industries
-    @license  BSD (see license.txt)
-
     This example will attempt to connect to an ISO14443A
     card or tag and retrieve some basic information about it
     that can be used to determine what type of card it is.   
@@ -11,26 +7,17 @@
     Note that you need the baud rate to be 115200 because we need to print
     out the data and read from the card at the same time!
 
-    This is an example sketch for the Adafruit PN532 NFC/RFID breakout boards
-    This library works with the Adafruit NFC breakout 
-    ----> https://www.adafruit.com/products/364
- 
-    Check out the links above for our tutorials and wiring diagrams 
-    These chips use I2C to communicate, 4 pins required to interface:
-    SDA (I2C Data) and SCL (I2C Clock), IRQ and RESET (any digital line)
-
-    Adafruit invests time and resources providing this open source code, 
-    please support Adafruit and open-source hardware by purchasing 
-    products from Adafruit!
+    To enable debug message, define DEBUG in PN532/PN532_debug.h
+    
 */
 /**************************************************************************/
 
-#include <Wire.h>
-#include <PN532_I2C.h>
-#include <PN532.h>
+#include <SPI.h>
+#include <PN532_SPI.h>
+#include "PN532.h"
 
-PN532_I2C pn532i2c(Wire);
-PN532 nfc(pn532i2c);
+PN532_SPI pn532spi(SPI, 10);
+PN532 nfc(pn532spi);
 
 void setup(void) {
   Serial.begin(115200);
@@ -79,8 +66,9 @@ void loop(void) {
       Serial.print(" 0x");Serial.print(uid[i], HEX); 
     }
     Serial.println("");
-    // Wait 1 second before continuing
-    delay(1000);
+    
+    // wait until the card is taken away
+    while (nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength)) {}
   }
   else
   {

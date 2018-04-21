@@ -1,9 +1,5 @@
 /**************************************************************************/
 /*!
-    @file     mifareclassic_formatndef.pde
-    @author   Adafruit Industries
-    @license  BSD (see license.txt)
-
     This example attempts to format a clean Mifare Classic 1K card as
     an NFC Forum tag (to store NDEF messages that can be read by any
     NFC enabled Android phone, etc.)
@@ -11,27 +7,16 @@
     Note that you need the baud rate to be 115200 because we need to print
     out the data and read from the card at the same time!
 
-    This is an example sketch for the Adafruit PN532 NFC/RFID breakout boards
-    This library works with the Adafruit NFC Shield
-      ----> https://www.adafruit.com/products/789
-
-    Check out the links above for our tutorials and wiring diagrams
-    These chips use I2C to communicate
-
-    Adafruit invests time and resources providing this open source code,
-    please support Adafruit and open-source hardware by purchasing
-    products from Adafruit!
-
+    To enable debug message, define DEBUG in PN532/PN532_debug.h
 */
 /**************************************************************************/
 
-#include <Wire.h>
-#include <PN532_I2C.h>
-#include <PN532.h>
+#include <SPI.h>
+#include <PN532_SPI.h>
+#include "PN532.h"
 
-
-PN532_I2C pn532i2c(Wire);
-PN532 nfc(pn532i2c);
+PN532_SPI pn532spi(SPI, 10);
+PN532 nfc(pn532spi);
 
 /*
     We can encode many different kinds of pointers to the card,
@@ -40,7 +25,7 @@ PN532 nfc(pn532i2c);
     prefixes!
 */
 // For a http://www. url:
-const char * url = "adafruit.com";
+const char * url = "seeedstudio.com";
 uint8_t ndefprefix = NDEF_URIPREFIX_HTTP_WWWDOT;
 
 // for an email address
@@ -106,6 +91,10 @@ void loop(void) {
     Serial.print("  UID Length: ");Serial.print(uidLength, DEC);Serial.println(" bytes");
     Serial.print("  UID Value: ");
     nfc.PrintHex(uid, uidLength);
+    for (uint8_t i = 0; i < uidLength; i++) {
+      Serial.print(uid[i], HEX);
+      Serial.print(' ');
+    }
     Serial.println("");
 
     // Make sure this is a Mifare Classic card

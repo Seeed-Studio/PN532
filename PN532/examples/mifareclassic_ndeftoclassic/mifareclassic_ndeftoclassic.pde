@@ -1,30 +1,19 @@
 /**************************************************************************/
 /*! 
-    @file     mifareclassic_ndeftoclassic.pde
-    @author   KTOWN (Adafruit Industries)
-  	@license  BSD (see license.txt)
-
     This examples attempts to take a Mifare Classic 1K card that has been
     formatted for NDEF messages using mifareclassic_formatndef, and resets
     the authentication keys back to the Mifare Classic defaults
 
-    This is an example sketch for the Adafruit PN532 NFC/RFID breakout boards
-    This library works with the Adafruit NFC Shield 
-      ----> https://www.adafruit.com/products/789
- 
-    Check out the links above for our tutorials and wiring diagrams 
-    These chips use I2C to communicate
-
-    Adafruit invests time and resources providing this open source code, 
-    please support Adafruit and open-source hardware by purchasing 
-    products from Adafruit!
-
+    To enable debug message, define DEBUG in PN532/PN532_debug.h
 */
 /**************************************************************************/
 
-#include <Wire.h>
-#include <PN532_I2C.h>
-#include <PN532.h>
+#include <SPI.h>
+#include <PN532_SPI.h>
+#include "PN532.h"
+
+PN532_SPI pn532spi(SPI, 10);
+PN532 nfc(pn532spi);
 
 
 #define NR_SHORTSECTOR          (32)    // Number of short sectors on Mifare 1K/4K
@@ -44,10 +33,6 @@
 
 // The default Mifare Classic key
 static const uint8_t KEY_DEFAULT_KEYAB[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-
-// Create an instance PN532 nfc device
-PN532_I2C pn532i2c(Wire);
-PN532 nfc(pn532i2c);
 
 void setup(void) {
   Serial.begin(115200);

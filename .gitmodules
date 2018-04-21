@@ -1,0 +1,3 @@
+[submodule "NDEF"]
+	path = NDEF
+	url = https://github.com/don/NDEF.git

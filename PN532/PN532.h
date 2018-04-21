@@ -1,49 +1,16 @@
 /**************************************************************************/
-/*! 
+/*!
     @file     PN532.h
-    @author   Adafruit Industries
-	@license  BSD (see license.txt)
-	
-	This is a library for the Adafruit PN532 NFC/RFID shield
-	This library works with the Adafruit NFC breakout 
-	----> https://www.adafruit.com/products/364
-	
-	Check out the links above for our tutorials and wiring diagrams 
-	These chips use I2C to communicate
-	
-	Adafruit invests time and resources providing this open source code, 
-	please support Adafruit and open-source hardware by purchasing 
-	products from Adafruit!
-
-	@section  HISTORY
-
-    v1.3  - Modified to work with I2C
-	
-	v1.1  - Added full command list
-          - Added 'verbose' mode flag to constructor to toggle debug output
-          - Changed readPassiveTargetID() to return variable length values
-	
+    @author   Adafruit Industries & Seeed Studio
+    @license  BSD
 */
 /**************************************************************************/
 
-#ifndef PN532_h
-#define PN532_h
+#ifndef __PN532_H__
+#define __PN532_H__
 
-#if ARDUINO >= 100
- #include "Arduino.h"
-#else
- #include "WProgram.h"
-#endif
-
+#include <stdint.h>
 #include "PN532Interface.h"
-
-#define PN532_PREAMBLE                      (0x00)
-#define PN532_STARTCODE1                    (0x00)
-#define PN532_STARTCODE2                    (0xFF)
-#define PN532_POSTAMBLE                     (0x00)
-
-#define PN532_HOSTTOPN532                   (0xD4)
-#define PN532_PN532TOHOST                   (0xD5)
 
 // PN532 Commands
 #define PN532_COMMAND_DIAGNOSE              (0x00)
@@ -83,14 +50,6 @@
 #define PN532_RESPONSE_INLISTPASSIVETARGET  (0x4B)
 
 
-#define PN532_WAKEUP                        (0x55)
-
-#define PN532_I2C_ADDRESS                   (0x48 >> 1)
-#define PN532_I2C_READBIT                   (0x01)
-#define PN532_I2C_BUSY                      (0x00)
-#define PN532_I2C_READY                     (0x01)
-#define PN532_I2C_READYTIMEOUT              (20)
-
 #define PN532_MIFARE_ISO14443A              (0x00)
 
 // Mifare Commands
@@ -98,6 +57,7 @@
 #define MIFARE_CMD_AUTH_B                   (0x61)
 #define MIFARE_CMD_READ                     (0x30)
 #define MIFARE_CMD_WRITE                    (0xA0)
+#define MIFARE_CMD_WRITE_ULTRALIGHT         (0xA2)
 #define MIFARE_CMD_TRANSFER                 (0xB0)
 #define MIFARE_CMD_DECREMENT                (0xC0)
 #define MIFARE_CMD_INCREMENT                (0xC1)
@@ -149,53 +109,71 @@
 #define PN532_GPIO_P34                      (4)
 #define PN532_GPIO_P35                      (5)
 
-//#define PN532DEBUG
-
-class PN532{
+class PN532
+{
 public:
-  PN532(PN532Interface &interface);
-  
-  void begin(void);
-  
-  // Generic PN532 functions
-  boolean SAMConfig(void);
-  uint32_t getFirmwareVersion(void);
-  boolean writeGPIO(uint8_t pinstate);
-  uint8_t readGPIO(void);
-  boolean setPassiveActivationRetries(uint8_t maxRetries);
-  
-  int8_t tgInitAsTarget();
-  int16_t tgGetData(uint8_t *buf, uint16_t len);
-  boolean tgSetData(const uint8_t *buf, uint16_t len);
-  
-  // ISO14443A functions
-  boolean inListPassiveTarget();
-  boolean readPassiveTargetID(uint8_t cardbaudrate, uint8_t * uid, uint8_t * uidLength);
-  boolean inDataExchange(uint8_t * send, uint8_t sendLength, uint8_t * response, uint8_t * responseLength);
-  
-  // Mifare Classic functions
-  bool mifareclassic_IsFirstBlock (uint32_t uiBlock);
-  bool mifareclassic_IsTrailerBlock (uint32_t uiBlock);
-  uint8_t mifareclassic_AuthenticateBlock (uint8_t * uid, uint8_t uidLen, uint32_t blockNumber, uint8_t keyNumber, uint8_t * keyData);
-  uint8_t mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t * data);
-  uint8_t mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t * data);
-  uint8_t mifareclassic_FormatNDEF (void);
-  uint8_t mifareclassic_WriteNDEFURI (uint8_t sectorNumber, uint8_t uriIdentifier, const char * url);
-  
-  // Mifare Ultralight functions
-  uint8_t mifareultralight_ReadPage (uint8_t page, uint8_t * buffer);
-  
-  // Help functions to display formatted text
-  static void PrintHex(const byte * data, const uint32_t numBytes);
-  static void PrintHexChar(const byte * pbtData, const uint32_t numBytes);
+    PN532(PN532Interface &interface);
 
- private:
-  uint8_t _uid[7];  // ISO14443A uid
-  uint8_t _uidLen;  // uid len
-  uint8_t _key[6];  // Mifare Classic key
-  uint8_t inListedTag; // Tg number of inlisted tag.
-  
-  PN532Interface* _interface;
+    void begin(void);
+
+    // Generic PN532 functions
+    bool SAMConfig(void);
+    uint32_t getFirmwareVersion(void);
+    bool writeGPIO(uint8_t pinstate);
+    uint8_t readGPIO(void);
+    bool setPassiveActivationRetries(uint8_t maxRetries);
+
+    /**
+    * @brief    Init PN532 as a target
+    * @param    timeout max time to wait, 0 means no timeout
+    * @return   > 0     success
+    *           = 0     timeout
+    *           < 0     failed
+    */
+    int8_t tgInitAsTarget(uint16_t timeout = 0);
+    int8_t tgInitAsTarget(const uint8_t* command, const uint8_t len, const uint16_t timeout = 0);
+
+    int16_t tgGetData(uint8_t *buf, uint8_t len);
+    bool tgSetData(const uint8_t *header, uint8_t hlen, const uint8_t *body = 0, uint8_t blen = 0);
+
+    int16_t inRelease(const uint8_t relevantTarget = 0);
+
+    // ISO14443A functions
+    bool inListPassiveTarget();
+    bool readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength, uint16_t timeout = 1000, bool inlist = false);
+    bool inDataExchange(uint8_t *send, uint8_t sendLength, uint8_t *response, uint8_t *responseLength);
+
+    // Mifare Classic functions
+    bool mifareclassic_IsFirstBlock (uint32_t uiBlock);
+    bool mifareclassic_IsTrailerBlock (uint32_t uiBlock);
+    uint8_t mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32_t blockNumber, uint8_t keyNumber, uint8_t *keyData);
+    uint8_t mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data);
+    uint8_t mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data);
+    uint8_t mifareclassic_FormatNDEF (void);
+    uint8_t mifareclassic_WriteNDEFURI (uint8_t sectorNumber, uint8_t uriIdentifier, const char *url);
+
+    // Mifare Ultralight functions
+    uint8_t mifareultralight_ReadPage (uint8_t page, uint8_t *buffer);
+    uint8_t mifareultralight_WritePage (uint8_t page, uint8_t *buffer);
+
+    // Help functions to display formatted text
+    static void PrintHex(const uint8_t *data, const uint32_t numBytes);
+    static void PrintHexChar(const uint8_t *pbtData, const uint32_t numBytes);
+
+    uint8_t *getBuffer(uint8_t *len) {
+        *len = sizeof(pn532_packetbuffer) - 4;
+        return pn532_packetbuffer;
+    };
+
+private:
+    uint8_t _uid[7];  // ISO14443A uid
+    uint8_t _uidLen;  // uid len
+    uint8_t _key[6];  // Mifare Classic key
+    uint8_t inListedTag; // Tg number of inlisted tag.
+
+    uint8_t pn532_packetbuffer[64];
+
+    PN532Interface *_interface;
 };
 
 #endif

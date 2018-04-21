@@ -1,36 +1,20 @@
 
 #include "mac_link.h"
+#include "PN532_debug.h"
 
-MACLink::MACLink(PN532 &pn532)
+int8_t MACLink::activateAsTarget(uint16_t timeout)
 {
-    _pn532 = &pn532;
+	pn532.begin();
+	pn532.SAMConfig();
+    return pn532.tgInitAsTarget(timeout);
 }
 
-int8_t MACLink::activateAsTarget()
+bool MACLink::write(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen)
 {
-    return _pn532->tgInitAsTarget();
+    return pn532.tgSetData(header, hlen, body, blen);
 }
 
-int8_t MACLink::writePDU(const uint8_t *buf, uint16_t len)
+int16_t MACLink::read(uint8_t *buf, uint8_t len)
 {
-    if (!_pn532->tgSetData(buf, len)) {
-        return -1;
-    } else {
-        return 0;
-    }
-}
-
-int8_t MACLink::readPDU(uint8_t *buf, uint16_t len)
-{
-    int16_t status = _pn532->tgGetData(buf, len);
-    if (status < 0) {
-        return status;
-    }
-    
-    uint16_t length = status;
-    if (length < 2) {
-        return -6;
-    }
-    
-    return 0;  // return length instread ?
+    return pn532.tgGetData(buf, len);
 }

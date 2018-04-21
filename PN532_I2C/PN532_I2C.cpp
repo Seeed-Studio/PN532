@@ -1,6 +1,7 @@
 
 #include "PN532_I2C.h"
-#include "debug.h"
+#include "PN532_debug.h"
+#include "Arduino.h"
 
 #define PN532_I2C_ADDRESS       (0x48 >> 1)
 
@@ -23,51 +24,45 @@ void PN532_I2C::wakeup()
     _wire->endTransmission();                    // I2C end
 }
 
-int8_t PN532_I2C::writeCommand(const uint8_t buf[], uint8_t len)
+int8_t PN532_I2C::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen)
 {
-    command = buf[0];
+    command = header[0];
     _wire->beginTransmission(PN532_I2C_ADDRESS);
     
     write(PN532_PREAMBLE);
     write(PN532_STARTCODE1);
     write(PN532_STARTCODE2);
     
-    uint8_t length = len + 1;   // length of data field: TFI + DATA
+    uint8_t length = hlen + blen + 1;   // length of data field: TFI + DATA
     write(length);
-    write(~length + 1);         // checksum of length
+    write(~length + 1);                 // checksum of length
     
     write(PN532_HOSTTOPN532);
     uint8_t sum = PN532_HOSTTOPN532;    // sum of TFI + DATA
     
     DMSG("write: ");
-    
-#if 1    
-    for (uint8_t i = 0; i < len; i++) {
-        if (write(buf[i])) {
-            sum += buf[i];
+       
+    for (uint8_t i = 0; i < hlen; i++) {
+        if (write(header[i])) {
+            sum += header[i];
             
-            DMSG_HEX(buf[i]);
+            DMSG_HEX(header[i]);
         } else {
             DMSG("\nToo many data to send, I2C doesn't support such a big packet\n");     // I2C max packet: 32 bytes
             return PN532_INVALID_FRAME;
         }
     }
-#else
-    uint8_t bytes = 6;
-    for (uint8_t i = 0; i < len; i++) {
-        write(buf[i]);
-        sum += buf[i];   
-        DMSG_HEX(buf[i]);
-        
-        bytes++;
-        if (bytes >= 30) {
-            _wire->endTransmission(false);   // keep I2C connection active.
-            _wire->beginTransmission(PN532_I2C_ADDRESS);
-            bytes = 0;
+
+    for (uint8_t i = 0; i < blen; i++) {
+        if (write(body[i])) {
+            sum += body[i];
+            
+            DMSG_HEX(body[i]);
+        } else {
+            DMSG("\nToo many data to send, I2C doesn't support such a big packet\n");     // I2C max packet: 32 bytes
+            return PN532_INVALID_FRAME;
         }
     }
-    
-#endif
   
     uint8_t checksum = ~sum + 1;            // checksum of TFI + DATA
     write(checksum);
