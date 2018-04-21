@@ -2,36 +2,14 @@
 /*!
     @file     PN532.cpp
     @author   Adafruit Industries & Seeed Studio
-    @license  BSD (see license.txt)
-
-
-    @section  HISTORY
-    v1.5 - Modified to work with I2C and SPI
-
-    v1.4 - Added setPassiveActivationRetries()
-
-    v1.3 - Modified to work with I2C
-
-    v1.2 - Added writeGPIO()
-         - Added readGPIO()
-
-    v1.1 - Changed readPassiveTargetID() to handle multiple UID sizes
-         - Added the following helper functions for text display
-             static void PrintHex(const uint8_t * data, const uint32_t numBytes)
-             static void PrintHexChar(const uint8_t * pbtData, const uint32_t numBytes)
-         - Added the following Mifare Classic functions:
-             bool mifareclassic_IsFirstBlock (uint32_t uiBlock)
-             bool mifareclassic_IsTrailerBlock (uint32_t uiBlock)
-             uint8_t mifareclassic_AuthenticateBlock (uint8_t * uid, uint8_t uidLen, uint32_t blockNumber, uint8_t keyNumber, uint8_t * keyData)
-             uint8_t mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t * data)
-             uint8_t mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t * data)
-         - Added the following Mifare Ultalight functions:
-             uint8_t mifareultralight_ReadPage (uint8_t page, uint8_t * buffer)
+    @license  BSD
 */
 /**************************************************************************/
 
+#include "Arduino.h"
 #include "PN532.h"
 #include "PN532_debug.h"
+#include <string.h>
 
 #define HAL(func)   (_interface->func)
 
@@ -61,11 +39,22 @@ void PN532::begin()
 /**************************************************************************/
 void PN532::PrintHex(const uint8_t *data, const uint32_t numBytes)
 {
+#ifdef ARDUINO
     for (uint8_t i = 0; i < numBytes; i++) {
-        DMSG("0x");
-        DMSG_HEX(data[i]);
+        if (data[i] < 0x10) {
+            Serial.print(" 0");
+        } else {
+            Serial.print(' ');
+        }
+        Serial.print(data[i], HEX);
     }
-    DMSG("\n");
+    Serial.println("");
+#else
+    for (uint8_t i = 0; i < numBytes; i++) {
+        printf(" %2X", data[i]);
+    }
+    printf("\n");
+#endif
 }
 
 /**************************************************************************/
@@ -81,19 +70,40 @@ void PN532::PrintHex(const uint8_t *data, const uint32_t numBytes)
 /**************************************************************************/
 void PN532::PrintHexChar(const uint8_t *data, const uint32_t numBytes)
 {
+#ifdef ARDUINO
     for (uint8_t i = 0; i < numBytes; i++) {
-        DMSG_HEX(data[i]);
+        if (data[i] < 0x10) {
+            Serial.print(" 0");
+        } else {
+            Serial.print(' ');
+        }
+        Serial.print(data[i], HEX);
     }
-    DMSG("        ");
+    Serial.print("    ");
     for (uint8_t i = 0; i < numBytes; i++) {
         char c = data[i];
         if (c <= 0x1f || c > 0x7f) {
-            DMSG('.');
+            Serial.print('.');
         } else {
-            DMSG(c);
+            Serial.print(c);
         }
     }
-
+    Serial.println("");
+#else
+    for (uint8_t i = 0; i < numBytes; i++) {
+        printf(" %2X", data[i]);
+    }
+    printf("    ");
+    for (uint8_t i = 0; i < numBytes; i++) {
+        char c = data[i];
+        if (c <= 0x1f || c > 0x7f) {
+            printf(".");
+        } else {
+            printf("%c", c);
+        }
+        printf("\n");
+    }
+#endif
 }
 
 /**************************************************************************/
@@ -270,11 +280,13 @@ bool PN532::setPassiveActivationRetries(uint8_t maxRetries)
                           with the card's UID (up to 7 bytes)
     @param  uidLength     Pointer to the variable that will hold the
                           length of the card's UID.
+    @param  timeout       The number of tries before timing out
+    @param  inlist        If set to true, the card will be inlisted
 
     @returns 1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-bool PN532::readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength, uint16_t timeout)
+bool PN532::readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength, uint16_t timeout, bool inlist)
 {
     pn532_packetbuffer[0] = PN532_COMMAND_INLISTPASSIVETARGET;
     pn532_packetbuffer[1] = 1;  // max 1 cards at once (we can set this to 2 later)
@@ -318,6 +330,10 @@ bool PN532::readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uid
 
     for (uint8_t i = 0; i < pn532_packetbuffer[5]; i++) {
         uid[i] = pn532_packetbuffer[6 + i];
+    }
+
+    if (inlist) {
+        inListedTag = pn532_packetbuffer[1];
     }
 
     return 1;
@@ -642,6 +658,35 @@ uint8_t PN532::mifareultralight_ReadPage (uint8_t page, uint8_t *buffer)
 
 /**************************************************************************/
 /*!
+    Tries to write an entire 4-bytes data buffer at the specified page
+    address.
+
+    @param  page     The page number to write into.  (0..63).
+    @param  buffer   The byte array that contains the data to write.
+
+    @returns 1 if everything executed properly, 0 for an error
+*/
+/**************************************************************************/
+uint8_t PN532::mifareultralight_WritePage (uint8_t page, uint8_t *buffer)
+{
+    /* Prepare the first command */
+    pn532_packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
+    pn532_packetbuffer[1] = 1;                           /* Card number */
+    pn532_packetbuffer[2] = MIFARE_CMD_WRITE_ULTRALIGHT; /* Mifare UL Write cmd = 0xA2 */
+    pn532_packetbuffer[3] = page;                        /* page Number (0..63) */
+    memcpy (pn532_packetbuffer + 4, buffer, 4);          /* Data Payload */
+
+    /* Send the command */
+    if (HAL(writeCommand)(pn532_packetbuffer, 8)) {
+        return 0;
+    }
+
+    /* Read the response packet */
+    return (0 < HAL(readResponse)(pn532_packetbuffer, sizeof(pn532_packetbuffer)));
+}
+
+/**************************************************************************/
+/*!
     @brief  Exchanges an APDU with the currently inlisted peer
 
     @param  send            Pointer to data to send
@@ -718,6 +763,23 @@ bool PN532::inListPassiveTarget()
     return true;
 }
 
+int8_t PN532::tgInitAsTarget(const uint8_t* command, const uint8_t len, const uint16_t timeout){
+  
+  int8_t status = HAL(writeCommand)(command, len);
+    if (status < 0) {
+        return -1;
+    }
+
+    status = HAL(readResponse)(pn532_packetbuffer, sizeof(pn532_packetbuffer), timeout);
+    if (status > 0) {
+        return 1;
+    } else if (PN532_TIMEOUT == status) {
+        return 0;
+    } else {
+        return -2;
+    }
+}
+
 /**
  * Peer to Peer
  */
@@ -736,22 +798,10 @@ int8_t PN532::tgInitAsTarget(uint16_t timeout)
 
         0x01, 0xFE, 0x0F, 0xBB, 0xBA, 0xA6, 0xC9, 0x89, 0x00, 0x00, //NFCID3t: Change this to desired value
 
-        0x06, 0x46,  0x66, 0x6D, 0x01, 0x01, 0x10, 0x00// LLCP magic number and version parameter
+        0x0a, 0x46,  0x66, 0x6D, 0x01, 0x01, 0x10, 0x02, 0x02, 0x00, 0x80, // LLCP magic number, version parameter and MIUX
+        0x00
     };
-
-    int8_t status = HAL(writeCommand)(command, sizeof(command));
-    if (status < 0) {
-        return -1;
-    }
-
-    status = HAL(readResponse)(pn532_packetbuffer, sizeof(pn532_packetbuffer), timeout);
-    if (status > 0) {
-        return 1;
-    } else if (PN532_TIMEOUT == status) {
-        return 0;
-    } else {
-        return -2;
-    }
+    return tgInitAsTarget(command, sizeof(command), timeout);
 }
 
 int16_t PN532::tgGetData(uint8_t *buf, uint8_t len)
@@ -785,16 +835,24 @@ int16_t PN532::tgGetData(uint8_t *buf, uint8_t len)
 bool PN532::tgSetData(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen)
 {
     if (hlen > (sizeof(pn532_packetbuffer) - 1)) {
-        return false;
-    }
+        if ((body != 0) || (header == pn532_packetbuffer)) {
+            DMSG("tgSetData:buffer too small\n");
+            return false;
+        }
 
-    for (int8_t i = hlen - 1; i >= 0; i--){
-        pn532_packetbuffer[i + 1] = header[i];
-    }
-    pn532_packetbuffer[0] = PN532_COMMAND_TGSETDATA;
+        pn532_packetbuffer[0] = PN532_COMMAND_TGSETDATA;
+        if (HAL(writeCommand)(pn532_packetbuffer, 1, header, hlen)) {
+            return false;
+        }
+    } else {
+        for (int8_t i = hlen - 1; i >= 0; i--){
+            pn532_packetbuffer[i + 1] = header[i];
+        }
+        pn532_packetbuffer[0] = PN532_COMMAND_TGSETDATA;
 
-    if (HAL(writeCommand)(pn532_packetbuffer, hlen + 1, body, blen)) {
-        return false;
+        if (HAL(writeCommand)(pn532_packetbuffer, hlen + 1, body, blen)) {
+            return false;
+        }
     }
 
     if (0 > HAL(readResponse)(pn532_packetbuffer, sizeof(pn532_packetbuffer), 3000)) {
@@ -807,3 +865,18 @@ bool PN532::tgSetData(const uint8_t *header, uint8_t hlen, const uint8_t *body, 
 
     return true;
 }
+
+int16_t PN532::inRelease(const uint8_t relevantTarget){
+
+    pn532_packetbuffer[0] = PN532_COMMAND_INRELEASE;
+    pn532_packetbuffer[1] = relevantTarget;
+
+    if (HAL(writeCommand)(pn532_packetbuffer, 2)) {
+        return 0;
+    }
+
+    // read data packet
+    return HAL(readResponse)(pn532_packetbuffer, sizeof(pn532_packetbuffer));
+}
+
+

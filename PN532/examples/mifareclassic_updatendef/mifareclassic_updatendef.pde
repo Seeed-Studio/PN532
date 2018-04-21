@@ -2,31 +2,18 @@
 /*!
     Updates a sector that is already formatted for NDEF (using
     mifareclassic_formatndef.pde for example), inserting a new url
+
+    To enable debug message, define DEBUG in PN532/PN532_debug.h
 */
 /**************************************************************************/
 
-// choose to SPI or I2C or HSU
-#if 0
-  #include <SPI.h>
-  #include <PN532_SPI.h>
-  #include "PN532.h"
+#include <SPI.h>
+#include <PN532_SPI.h>
+#include "PN532.h"
 
-  PN532SPI pn532spi(SPI, 10);
-  PN532 nfc(pn532spi);
-#elif 0
-  #include <PN532_HSU.h>
-  #include <PN532.h>
-      
-  PN532_HSU pn532hsu(Serial1);
-  PN532 nfc(pn532hsu);
-#else 
-  #include <Wire.h>
-  #include <PN532_I2C.h>
-  #include <PN532.h>
+PN532_SPI pn532spi(SPI, 10);
+PN532 nfc(pn532spi);
 
-  PN532_I2C pn532i2c(Wire);
-  PN532 nfc(pn532i2c);
-#endif
 
 
 /*  

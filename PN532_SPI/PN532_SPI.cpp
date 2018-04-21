@@ -1,6 +1,7 @@
 
 #include "PN532_SPI.h"
 #include "PN532_debug.h"
+#include "Arduino.h"
 
 #define STATUS_READ     2
 #define DATA_WRITE      1
@@ -20,11 +21,14 @@ void PN532_SPI::begin()
     _spi->begin();
     _spi->setDataMode(SPI_MODE0);  // PN532 only supports mode0
     _spi->setBitOrder(LSBFIRST);
-#ifndef __SAM3X8E__
-    _spi->setClockDivider(SPI_CLOCK_DIV8); // set clock 2MHz(max: 5MHz)
-#else 
+#if defined __SAM3X8E__
     /** DUE spi library does not support SPI_CLOCK_DIV8 macro */
     _spi->setClockDivider(42);             // set clock 2MHz(max: 5MHz)
+#elif defined __SAMD21G18A__
+    /** M0 spi library does not support SPI_CLOCK_DIV8 macro */
+    _spi->setClockDivider(24);             // set clock 2MHz(max: 5MHz)
+#else 
+    _spi->setClockDivider(SPI_CLOCK_DIV8); // set clock 2MHz(max: 5MHz)
 #endif
 
 }

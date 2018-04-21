@@ -3,6 +3,7 @@
 #define __PN532_HSU_H__
 
 #include "PN532Interface.h"
+#include "Arduino.h"
 
 #define PN532_HSU_DEBUG
 

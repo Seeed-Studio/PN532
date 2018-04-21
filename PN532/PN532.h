@@ -2,32 +2,15 @@
 /*!
     @file     PN532.h
     @author   Adafruit Industries & Seeed Studio
-    @license  BSD (see license.txt)
-
-
-    @section  HISTORY
-    v1.5 - Modified to work with I2C and SPI
-
-    v1.3  - Modified to work with I2C
-
-    v1.1  - Added full command list
-          - Added 'verbose' mode flag to constructor to toggle debug output
-          - Changed readPassiveTargetID() to return variable length values
-
+    @license  BSD
 */
 /**************************************************************************/
 
-#ifndef PN532_h
-#define PN532_h
+#ifndef __PN532_H__
+#define __PN532_H__
 
-#if ARDUINO >= 100
-#include "Arduino.h"
-#else
-#include "WProgram.h"
-#endif
-
+#include <stdint.h>
 #include "PN532Interface.h"
-
 
 // PN532 Commands
 #define PN532_COMMAND_DIAGNOSE              (0x00)
@@ -74,6 +57,7 @@
 #define MIFARE_CMD_AUTH_B                   (0x61)
 #define MIFARE_CMD_READ                     (0x30)
 #define MIFARE_CMD_WRITE                    (0xA0)
+#define MIFARE_CMD_WRITE_ULTRALIGHT         (0xA2)
 #define MIFARE_CMD_TRANSFER                 (0xB0)
 #define MIFARE_CMD_DECREMENT                (0xC0)
 #define MIFARE_CMD_INCREMENT                (0xC1)
@@ -147,12 +131,16 @@ public:
     *           < 0     failed
     */
     int8_t tgInitAsTarget(uint16_t timeout = 0);
+    int8_t tgInitAsTarget(const uint8_t* command, const uint8_t len, const uint16_t timeout = 0);
+
     int16_t tgGetData(uint8_t *buf, uint8_t len);
     bool tgSetData(const uint8_t *header, uint8_t hlen, const uint8_t *body = 0, uint8_t blen = 0);
 
+    int16_t inRelease(const uint8_t relevantTarget = 0);
+
     // ISO14443A functions
     bool inListPassiveTarget();
-    bool readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength, uint16_t timeout = 1000);
+    bool readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength, uint16_t timeout = 1000, bool inlist = false);
     bool inDataExchange(uint8_t *send, uint8_t sendLength, uint8_t *response, uint8_t *responseLength);
 
     // Mifare Classic functions
@@ -166,6 +154,7 @@ public:
 
     // Mifare Ultralight functions
     uint8_t mifareultralight_ReadPage (uint8_t page, uint8_t *buffer);
+    uint8_t mifareultralight_WritePage (uint8_t page, uint8_t *buffer);
 
     // Help functions to display formatted text
     static void PrintHex(const uint8_t *data, const uint32_t numBytes);

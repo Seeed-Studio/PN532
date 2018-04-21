@@ -3,6 +3,8 @@
 
 //#define DEBUG
 
+#include "Arduino.h"
+
 #ifdef DEBUG
 #define DMSG(args...)       Serial.print(args)
 #define DMSG_STR(str)       Serial.println(str)

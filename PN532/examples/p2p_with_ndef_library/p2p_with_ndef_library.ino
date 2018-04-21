@@ -40,7 +40,6 @@ void loop()
 
     delay(3000);
 #else
-    // it seems there are some issues to use NdefMessage to decode the received data from Android
     Serial.println("Get a message from Android");
     int msgSize = nfc.read(ndefBuf, sizeof(ndefBuf));
     if (msgSize > 0) {
