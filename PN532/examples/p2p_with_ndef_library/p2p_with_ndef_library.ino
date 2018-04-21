@@ -22,7 +22,7 @@ void loop()
 #if 1
     Serial.println("Send a message to Android");
     NdefMessage message = NdefMessage();
-    message.addUriRecord("http://www.seeedstudio.com");
+    message.addUriRecord("http://www.elechouse.com");
     int messageSize = message.getEncodedSize();
     if (messageSize > sizeof(ndefBuf)) {
         Serial.println("ndefBuf is too small");
