@@ -576,7 +576,7 @@ uint8_t PN532::mifareclassic_WriteNDEFURI (uint8_t sectorNumber, uint8_t uriIden
         // 0xFE needs to be wrapped around to next block
         memcpy (sectorbuffer1 + 9, url, len);
         sectorbuffer2[0] = 0xFE;
-    } else if ((len > 7) || (len <= 22)) {
+    } else if ((len > 7) && (len <= 22)) {
         // Url fits in two blocks
         memcpy (sectorbuffer1 + 9, url, 7);
         memcpy (sectorbuffer2, url + 7, len - 7);
@@ -590,8 +590,8 @@ uint8_t PN532::mifareclassic_WriteNDEFURI (uint8_t sectorNumber, uint8_t uriIden
         // Url fits in three blocks
         memcpy (sectorbuffer1 + 9, url, 7);
         memcpy (sectorbuffer2, url + 7, 16);
-        memcpy (sectorbuffer3, url + 23, len - 24);
-        sectorbuffer3[len - 22] = 0xFE;
+        memcpy (sectorbuffer3, url + 23, len - 23);
+        sectorbuffer3[len - 23] = 0xFE;
     }
 
     // Now write all three blocks back to the card
