@@ -312,6 +312,25 @@ bool PN532::SAMConfig(void)
 
 /**************************************************************************/
 /*!
+    @brief  Turn the module into power mode  will wake up on I2C or SPI request 
+*/
+/**************************************************************************/
+bool PN532::powerDownMode()
+{
+    pn532_packetbuffer[0] = PN532_COMMAND_POWERDOWN; 
+    pn532_packetbuffer[1] = 0xC0; // I2C or SPI Wakeup
+    pn532_packetbuffer[2] = 0x00; // no IRQ
+
+    DMSG("POWERDOWN\n");
+
+    if (HAL(writeCommand)(pn532_packetbuffer, 4))
+        return false;
+
+    return (0 < HAL(readResponse)(pn532_packetbuffer, sizeof(pn532_packetbuffer)));
+}
+
+/**************************************************************************/
+/*!
     Sets the MxRtyPassiveActivation uint8_t of the RFConfiguration register
 
     @param  maxRetries    0xFF to wait forever, 0x00..0xFE to timeout
