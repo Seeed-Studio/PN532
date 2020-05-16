@@ -1,6 +1,6 @@
 
-#include "PN532/PN532/snep.h"
-#include "PN532/PN532/PN532_debug.h"
+#include "snep.h"
+#include "PN532_debug.h"
 
 int8_t SNEP::write(const uint8_t *buf, uint8_t len, uint16_t timeout)
 {

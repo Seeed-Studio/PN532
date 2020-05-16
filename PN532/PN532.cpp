@@ -7,8 +7,8 @@
 /**************************************************************************/
 
 #include "Arduino.h"
-#include "PN532/PN532/PN532.h"
-#include "PN532/PN532/PN532_debug.h"
+#include "PN532.h"
+#include "PN532_debug.h"
 #include <string.h>
 
 #define HAL(func)   (_interface->func)

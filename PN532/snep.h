@@ -3,7 +3,7 @@
 #ifndef __SNEP_H__
 #define __SNEP_H__
 
-#include "PN532/PN532/llcp.h"
+#include "llcp.h"
 
 #define SNEP_DEFAULT_VERSION	0x10	// Major: 1, Minor: 0
 

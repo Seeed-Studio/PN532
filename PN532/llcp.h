@@ -2,7 +2,7 @@
 #ifndef __LLCP_H__
 #define __LLCP_H__
 
-#include "PN532/PN532/mac_link.h"
+#include "mac_link.h"
 
 #define LLCP_DEFAULT_TIMEOUT  20000
 #define LLCP_DEFAULT_DSAP     0x04

@@ -3,7 +3,7 @@
 #ifndef __MAC_LINK_H__
 #define __MAC_LINK_H__
 
-#include "PN532/PN532/PN532.h"
+#include "PN532.h"
 
 class MACLink {
 public:

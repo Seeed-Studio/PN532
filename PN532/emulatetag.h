@@ -11,7 +11,7 @@
 #ifndef __EMULATETAG_H__
 #define __EMULATETAG_H__
 
-#include "PN532/PN532/PN532.h"
+#include "PN532.h"
 
 #define NDEF_MAX_LENGTH 128 // altough ndef can handle up to 0xfffe in size, arduino cannot.
 typedef enum
