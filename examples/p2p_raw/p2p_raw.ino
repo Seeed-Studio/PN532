@@ -3,7 +3,6 @@
 #define NFC_INTERFACE_SPI
 #include "SPI.h"
 #include "PN532_SPI.h"
-#include "PN532_SPI.cpp"
 #include "llcp.h"
 #include "snep.h"
 
