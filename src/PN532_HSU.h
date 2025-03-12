@@ -1,4 +1,3 @@
-
 #ifndef __PN532_HSU_H__
 #define __PN532_HSU_H__
 
@@ -12,7 +11,7 @@
 class PN532_HSU : public PN532Interface
 {
 public:
-    PN532_HSU(HardwareSerial &serial);
+    PN532_HSU(HardwareSerial &serial, int8_t rxPin = -1, int8_t txPin = -1);
 
     void begin();
     void wakeup();
@@ -22,6 +21,8 @@ public:
 private:
     HardwareSerial *_serial;
     uint8_t command;
+    int8_t _rxPin;
+    int8_t _txPin;
 
     int8_t readAckFrame();
 

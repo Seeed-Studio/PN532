@@ -3,15 +3,17 @@
 #include "PN532_HSU.h"
 #include "PN532_debug.h"
 
-PN532_HSU::PN532_HSU(HardwareSerial &serial)
+PN532_HSU::PN532_HSU(HardwareSerial &serial, int8_t rxPin, int8_t txPin)
 {
     _serial = &serial;
     command = 0;
+    _rxPin = rxPin;
+    _txPin = txPin;
 }
 
 void PN532_HSU::begin()
 {
-    _serial->begin(115200);
+    _serial->begin(115200, SERIAL_8N1, _rxPin, _txPin);
 }
 
 void PN532_HSU::wakeup()

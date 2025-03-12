@@ -100,7 +100,10 @@ To use the `Serial1` control PN532, refer to the code below.
 #include <PN532_HSU.h>
 #include <PN532.h>
 
-PN532_HSU pn532hsu(Serial1);
+PN532_HSU pn532hsu(Serial1); // Default board RX, TX pins
+// or
+PN532_HSU pn532hsu(Serial1, 36, 4); // Specified RX, TX pins
+
 PN532 nfc(pn532hsu);
 
 void setup(void)
