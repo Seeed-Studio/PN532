@@ -151,7 +151,7 @@ public:
     int8_t tgInitAsTarget(uint16_t timeout = 0);
     int8_t tgInitAsTarget(const uint8_t *command, const uint8_t len, const uint16_t timeout = 0);
 
-    int16_t tgGetData(uint8_t *buf, uint8_t len);
+    uint16_t tgGetData(uint8_t *buf, uint16_t len);
     bool tgSetData(const uint8_t *header, uint8_t hlen, const uint8_t *body = 0, uint8_t blen = 0);
 
     int16_t inRelease(const uint8_t relevantTarget = 0);
@@ -204,7 +204,7 @@ private:
     uint8_t _felicaIDm[8]; // FeliCa IDm (NFCID2)
     uint8_t _felicaPMm[8]; // FeliCa PMm (PAD)
 
-    uint8_t pn532_packetbuffer[64];
+    uint8_t pn532_packetbuffer[255];
 
     PN532Interface *_interface;
 };

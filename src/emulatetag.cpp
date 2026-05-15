@@ -81,20 +81,18 @@ bool EmulateTag::emulate(const uint16_t tgInitAsTargetTimeout)
 
   uint8_t command[] = {
       PN532_COMMAND_TGINITASTARGET,
-      5, // MODE: PICC only, Passive only
-
-      0x04, 0x00,       // SENS_RES
-      0x00, 0x00, 0x00, // NFCID1
-      0x20,             // SEL_RES
-
+      0x00,             // MODE: 0 = всі режими
+      0x04, 0x00,       // SENS_RES (ATQA) для ISO14443A Type 4
+      0x00, 0x00, 0x00, // NFCID1 (замінюється uid)
+      0x20,             // SEL_RES (SAK) = 0x20 → ISO14443-4 compliant, NDEF capable
+      // FeliCa params — нулі
       0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, // FeliCaParams
+      0, 0, 0, 0, 0, 0, 0, 0,
       0, 0,
-
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // NFCID3t
-
-      0, // length of general bytes
-      0  // length of historical bytes
+      // NFCID3t
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, // general bytes
+      0  // historical bytes
   };
 
   if (uidPtr != 0)
@@ -107,6 +105,7 @@ bool EmulateTag::emulate(const uint16_t tgInitAsTargetTimeout)
     DMSG("tgInitAsTarget failed or timed out!");
     return false;
   }
+  delay(50); // ← дати PN532 час підготуватись до першого tgGetData
 
   uint8_t compatibility_container[] = {
       0, 0x0F,
@@ -128,7 +127,7 @@ bool EmulateTag::emulate(const uint16_t tgInitAsTargetTimeout)
 
   tagWrittenByInitiator = false;
 
-  uint8_t rwbuf[128];
+  uint8_t rwbuf[NDEF_MAX_LENGTH];
   uint8_t sendlen;
   int16_t status;
   tag_file currentFile = NONE;
@@ -137,13 +136,24 @@ bool EmulateTag::emulate(const uint16_t tgInitAsTargetTimeout)
 
   while (runLoop)
   {
-    status = pn532.tgGetData(rwbuf, sizeof(rwbuf));
+    status = pn532.tgGetData(rwbuf, 255);
+    Serial.printf("[EMU] tgGetData status=%d\n", status);
+
     if (status < 0)
     {
+      if (status == -6) {
+        // телефон успішно прочитав і відключився
+        pn532.inRelease();
+        return true;
+      }
+      Serial.println("[EMU] tgGetData failed - connection lost before first command");
       DMSG("tgGetData failed!\n");
       pn532.inRelease();
       return true;
     }
+    // ← тут, після отримання даних
+    Serial.printf("[EMU] INS=0x%02X P1=0x%02X P2=0x%02X LC=%d\n", 
+        rwbuf[C_APDU_INS], rwbuf[C_APDU_P1], rwbuf[C_APDU_P2], rwbuf[C_APDU_LC]);
 
     uint8_t p1 = rwbuf[C_APDU_P1];
     uint8_t p2 = rwbuf[C_APDU_P2];
@@ -210,6 +220,7 @@ bool EmulateTag::emulate(const uint16_t tgInitAsTargetTimeout)
         }
         break;
       case NDEF:
+        Serial.printf("[EMU] READ_BINARY NDEF offset=%d len=%d\n", p1p2_length, lc);
         if (p1p2_length > NDEF_MAX_LENGTH)
         {
           setResponse(END_OF_FILE_BEFORE_REACHED_LE_BYTES, rwbuf, &sendlen);
@@ -253,6 +264,7 @@ bool EmulateTag::emulate(const uint16_t tgInitAsTargetTimeout)
       DMSG("\n");
       setResponse(FUNCTION_NOT_SUPPORTED, rwbuf, &sendlen);
     }
+    delayMicroseconds(500); 
     status = pn532.tgSetData(rwbuf, sendlen);
     if (status < 0)
     {

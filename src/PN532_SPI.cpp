@@ -20,7 +20,7 @@ void PN532_SPI::begin()
     pinMode(_ss, OUTPUT);
 
     _spi->begin();
-    _spi->beginTransaction(SPISettings(1000000, LSBFIRST, SPI_MODE0));
+    _spi->beginTransaction(SPISettings(100000, LSBFIRST, SPI_MODE0));
     _spi->endTransaction();
 #if defined(ARDUINO_XIAO_RA4M1) || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RP2350)
 #else
@@ -58,7 +58,7 @@ int8_t PN532_SPI::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
         if (0 == timeout)
         {
             DMSG("Time out when waiting for ACK\n");
-            return -2;
+            return -2;  // ← це і є ваш статус -4 (після трансформації)
         }
     }
     if (readAckFrame())
@@ -69,7 +69,7 @@ int8_t PN532_SPI::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
     return 0;
 }
 
-int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
+int16_t PN532_SPI::readResponse(uint8_t buf[], uint16_t len, uint16_t timeout)
 {
     uint16_t time = 0;
     while (!isReady())
@@ -78,6 +78,7 @@ int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
         time++;
         if (time > timeout)
         {
+            Serial.printf("[SPI] readResponse TIMEOUT after %d ms, len=%d\n", time, len);
             return PN532_TIMEOUT;
         }
     }
@@ -120,6 +121,7 @@ int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
         length -= 2;
         if (length > len)
         {
+            Serial.printf("[SPI] NO_SPACE: need %d, have %d\n", length, len);
             for (uint8_t i = 0; i < length; i++)
             {
                 DMSG_HEX(read()); // dump message
@@ -171,7 +173,7 @@ bool PN532_SPI::isReady()
 void PN532_SPI::writeFrame(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen)
 {
     digitalWrite(_ss, LOW);
-    delay(2); // wake up PN532
+    delay(10); // wake up PN532
 
     write(DATA_WRITE);
     write(PN532_PREAMBLE);

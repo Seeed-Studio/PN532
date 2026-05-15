@@ -115,7 +115,7 @@ int8_t PN532_HSU::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
     return readAckFrame();
 }
 
-int16_t PN532_HSU::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
+int16_t PN532_HSU::readResponse(uint8_t buf[], uint16_t len, uint16_t timeout)
 {
     uint8_t tmp[3];
 

@@ -13,7 +13,7 @@
 
 #include "PN532.h"
 
-#define NDEF_MAX_LENGTH 128 // altough ndef can handle up to 0xfffe in size, arduino cannot.
+#define NDEF_MAX_LENGTH 512 // altough ndef can handle up to 0xfffe in size, arduino cannot.
 typedef enum
 {
   COMMAND_COMPLETE,
@@ -61,7 +61,7 @@ public:
     return ndef_file;
   }
 
-  uint8_t getNdefMaxLength()
+  uint16_t getNdefMaxLength()
   {
     return NDEF_MAX_LENGTH;
   }

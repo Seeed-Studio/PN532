@@ -1069,7 +1069,7 @@ int8_t PN532::tgInitAsTarget(uint16_t timeout)
     return tgInitAsTarget(command, sizeof(command), timeout);
 }
 
-int16_t PN532::tgGetData(uint8_t *buf, uint8_t len)
+uint16_t PN532::tgGetData(uint8_t *buf, uint16_t len)
 {
     buf[0] = PN532_COMMAND_TGGETDATA;
 
@@ -1083,12 +1083,19 @@ int16_t PN532::tgGetData(uint8_t *buf, uint8_t len)
     {
         return status;
     }
+    Serial.printf("[PN532] tgGetData buf[0]=0x%02X, status=%d\n", buf[0], status); // ← додати
 
+    // 0x29 = target released (телефон відключився після читання — це нормально)
+    if (buf[0] == 0x29) {
+        return -6; // окремий код щоб відрізняти від помилки
+    }
+    
     uint16_t length = status - 1;
 
     if (buf[0] != 0)
     {
         DMSG("status is not ok\n");
+        Serial.printf("[PN532] tgGetData error status: 0x%02X\n", buf[0]); // ← додати
         return -5;
     }
 
