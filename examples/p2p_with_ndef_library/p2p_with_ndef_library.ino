@@ -1,10 +1,8 @@
 // send a NDEF message to adnroid or get a NDEF message
 //
 // note: [NDEF library](https://github.com/Don/NDEF) is needed.
-#define NFC_INTERFACE_SPI
 #include "SPI.h"
 #include "PN532_SPI.h"
-#include "PN532_SPI.cpp"
 #include "snep.h"
 #include "NdefMessage.h"
 

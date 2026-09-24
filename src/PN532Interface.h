@@ -5,6 +5,29 @@
 
 #include <stdint.h>
 
+// ---------------------------------------------------------------------------
+// Interface selection
+//
+// The NFC_INTERFACE_* macros control which transport implementations
+// (PN532_I2C / PN532_SPI / PN532_HSU / PN532_SWHSU) are compiled. They can be
+// defined globally (e.g. `build_flags = -DNFC_INTERFACE_SPI` in PlatformIO)
+// to build only the interfaces you need.
+//
+// When none of them is defined, I2C, SPI and HSU are compiled by default so
+// that a plain `#include <PN532_I2C.h>` (etc.) links without any extra
+// defines or build flags (issues #149, #163).
+//
+// SWHSU stays opt-in because it depends on SoftwareSerial, which is not
+// available on every core: define NFC_INTERFACE_SWHSU (globally, or in your
+// sketch together with `#include <PN532_SWHSU.cpp>`) to use it.
+// ---------------------------------------------------------------------------
+#if !defined(NFC_INTERFACE_I2C) && !defined(NFC_INTERFACE_SPI) && \
+    !defined(NFC_INTERFACE_HSU) && !defined(NFC_INTERFACE_SWHSU)
+#define NFC_INTERFACE_I2C
+#define NFC_INTERFACE_SPI
+#define NFC_INTERFACE_HSU
+#endif
+
 #define PN532_PREAMBLE                (0x00)
 #define PN532_STARTCODE1              (0x00)
 #define PN532_STARTCODE2              (0xFF)

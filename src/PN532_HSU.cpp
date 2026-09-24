@@ -1,3 +1,5 @@
+#include "PN532Interface.h" // resolves the NFC_INTERFACE_* defaults before the guard below
+
 #ifdef NFC_INTERFACE_HSU
 
 #include "PN532_HSU.h"

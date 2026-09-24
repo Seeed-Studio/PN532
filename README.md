@@ -26,13 +26,11 @@ It is for [NFC Shield](https://www.seeedstudio.com/NFC-Shield-V2-0.html) and [Gr
 
 1. Download [zip file](https://github.com/Seeed-Studio/PN532/archive/refs/heads/arduino.zip)， extract it into Arduino's libraries and rename it to PN532-Arduino.
 2. Download [Don's NDEF library](https://github.com/don/NDEF/archive/refs/heads/master.zip)， extract it into Arduino's libraries and rename it to NDEF.
-3. Add the `NFC_INTERFACE_<interface>` build flag to your build system or define it in your code using `#define NFC_INTERFACE_<interface>` like
+3. Follow the examples of the two libraries.
 
-   ```cpp
-   #define NFC_INTERFACE_I2C
-   ```
-
-4. Follow the examples of the two libraries.
+> Since v1.1.0 no build flags or `#define`s are needed: the I2C, SPI and HSU
+> interfaces are compiled automatically. Only the `SWHSU` interface still has
+> to be enabled explicitly (see [SWHSU](#swhsu-interface) below).
 
 ### PlatformIO library
 
@@ -43,12 +41,21 @@ lib_deps =
     https://github.com/Seeed-Studio/PN532.git
 ```
 
-> ⚠️ Besides using the correct `PN532_<interface>.h` include file, you have to add `-DNFC_INTERFACE_<interface>` to `build_flags` to select what interface you want to use. This is done to prevent requiring unnecessary dependencies on e.g. `SoftwareSerial` or `SPI` when you are not using those interfaces.
-
-```
-build_flags =
-    -DNFC_INTERFACE_HSU
-```
+> Since v1.1.0 the `-DNFC_INTERFACE_<interface>` build flag is **optional**.
+> I2C, SPI and HSU are compiled by default, so a plain include is enough:
+>
+> ```cpp
+> #include <PN532_I2C.h>
+> #include <PN532.h>
+> ```
+>
+> If you want to build only one interface (e.g. to save flash or to avoid an
+> available dependency), you can still select it explicitly:
+>
+> ```
+> build_flags =
+>     -DNFC_INTERFACE_HSU
+> ```
 
 ### Git way for Linux/Mac (recommended)
 
@@ -79,14 +86,16 @@ This library offers four ways to interface with the PN532 board:
 
 Read the section for the interface you want to use.
 
-> Make sure to add the `PN532_<interface>.h` include file and the `NFC_INTERFACE_<interface>` define to your code like the example below:
-
-```cpp
-#define NFC_INTERFACE_HSU
-
-#include <PN532_HSU.h>
-#include <PN532.h>
-```
+> Since v1.1.0 all you need is the right `PN532_<interface>.h` include file —
+> I2C, SPI and HSU are compiled automatically:
+>
+> ```cpp
+> #include <PN532_HSU.h>
+> #include <PN532.h>
+> ```
+>
+> Only `SWHSU` must be enabled explicitly, because it requires
+> `SoftwareSerial`, which is not available on every board (see below).
 
 ## HSU Interface
 
@@ -98,7 +107,6 @@ To use the `Serial1` control PN532, refer to the code below.
 /* If you need to specify the pin: For ESP32, you can use PN532_HSU pn532hsu(Serial1, 36, 4) to specify the pin;
 For other series that support soft serial port, you can use the soft serial port to specify the pin:
 #define USE_SOFT_SERIAL_PIN
-#define NFC_INTERFACE_HSU
 #include <PN532_HSU.h>
 #include <PN532.h>
 
@@ -106,8 +114,6 @@ SoftwareSerial mysoft_serial(D7,D6);
 PN532_HSU pn532hsu(mysoft_serial);
 PN532 nfc(pn532hsu);
 */ 
-
-#define NFC_INTERFACE_HSU
 
 #include <PN532_HSU.h>
 #include <PN532.h>
@@ -122,13 +128,16 @@ void setup(void)
 }
 ```
 
-If your Arduino has only one serial interface and you want to keep it for control or debugging with the Serial Monitor, you can use the [`SoftwareSerial`][softwareserial] library to control the PN532 by emulating a serial interface. Include `PN532_SWHSU.h` instead of `PN532_HSU.h`:
+If your Arduino has only one serial interface and you want to keep it for control or debugging with the Serial Monitor, you can use the [`SoftwareSerial`][softwareserial] library to control the PN532 by emulating a serial interface. Include `PN532_SWHSU.h` instead of `PN532_HSU.h`.
+
+`SWHSU` is the one interface that is **not** compiled by default, because it depends on `SoftwareSerial`, which is not available on every board. Enable it with a global build flag (`-DNFC_INTERFACE_SWHSU`), or — in the Arduino IDE — by defining the macro and including the implementation in your sketch:
 
 ```c++
 #define NFC_INTERFACE_SWHSU
 
 #include <SoftwareSerial.h>
 #include <PN532_SWHSU.h>
+#include <PN532_SWHSU.cpp> // only needed when the macro is defined in the sketch
 #include <PN532.h>
 
 SoftwareSerial SWSerial( 10, 11 ); // RX, TX

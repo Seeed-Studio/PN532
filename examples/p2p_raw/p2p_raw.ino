@@ -1,9 +1,7 @@
 // snep_test.ino
 // send a SNEP message to adnroid and get a message from android
-#define NFC_INTERFACE_SPI
 #include "SPI.h"
 #include "PN532_SPI.h"
-#include "PN532_SPI.cpp"
 #include "llcp.h"
 #include "snep.h"
 
